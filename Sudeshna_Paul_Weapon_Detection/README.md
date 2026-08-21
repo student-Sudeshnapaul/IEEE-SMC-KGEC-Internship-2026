@@ -4,10 +4,10 @@
 Powered by a custom-trained YOLOv8 model, wrapped in a Streamlit app that watches your webcam, your photos, or your videos — and flags what it sees.
 
 <p align="center">
-  <img src="sample1.png" alt="Weapon detection sample output" width="800"/>
+  <img src="assets/sample1.png" alt="Weapon detection sample output" width="800"/>
 </p>
 <p align="center">
-  <img src="sample2.png" alt="Weapon detection sample output" width="800"/>
+  <img src="assets/sample2.png" alt="Weapon detection sample output" width="800"/>
 </p>
 <p align="center"><i>Detected weapons, boxed and scored, in real time.</i></p>
 
