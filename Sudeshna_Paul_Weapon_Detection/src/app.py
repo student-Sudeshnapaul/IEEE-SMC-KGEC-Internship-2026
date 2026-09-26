@@ -1,11 +1,3 @@
-"""
-Live Weapon Detection System
------------------------------
-Streamlit app that runs a YOLOv8 model on a live webcam feed (via browser),
-uploaded images, or uploaded videos, drawing bounding boxes on detections
-and logging them.
-"""
-
 import time
 import queue
 import tempfile
@@ -21,46 +13,29 @@ from PIL import Image
 from ultralytics import YOLO
 from streamlit_webrtc import webrtc_streamer, RTCConfiguration, VideoProcessorBase
 
-# --------------------------------------------------------------------------
-# CONFIG
-# --------------------------------------------------------------------------
+
 MODEL_PATH = "best.pt"
 CLASS_NAMES = {0: "Weapon", 1: "Weapon"}
-
-# Set your detection confidence threshold here (0.1 - 0.9).
-# Lower = more sensitive (more detections, more false positives).
-# Higher = stricter (fewer detections, may miss real weapons).
 CONFIDENCE_THRESHOLD = 0.5
 
 st.set_page_config(page_title="Weapon Detection System", layout="wide")
 
-# --------------------------------------------------------------------------
-# SESSION STATE INIT
-# --------------------------------------------------------------------------
+
 if "alert_log" not in st.session_state:
-    st.session_state.alert_log = []  # list of dicts: {time, class, confidence}
+    st.session_state.alert_log = []  
 if "detection_queue" not in st.session_state:
     st.session_state.detection_queue = queue.Queue()
 
-# --------------------------------------------------------------------------
-# SIDEBAR CONTROLS
-# --------------------------------------------------------------------------
 st.sidebar.title("⚙️ Settings")
 st.sidebar.caption(f"Detection confidence threshold: **{CONFIDENCE_THRESHOLD}** (set in code)")
 
 if st.sidebar.button("Clear alert log"):
     st.session_state.alert_log = []
 
-# --------------------------------------------------------------------------
-# LOAD MODEL (cached so it only loads once)
-# --------------------------------------------------------------------------
 @st.cache_resource
 def load_model():
     m = YOLO(MODEL_PATH)
-    # Override the model's own internal class names so the labels drawn
-    # directly on the image (via r.plot()) match CLASS_NAMES above, not
-    # just the text summary below the image. `m.names` is a read-only
-    # property on the YOLO wrapper, so we set it on the underlying model.
+  
     m.model.names = CLASS_NAMES
     return m
 
@@ -98,16 +73,14 @@ def run_detection_on_image(image_bgr):
     return annotated, detections
 
 
-# --------------------------------------------------------------------------
-# VIDEO PROCESSOR (runs per-frame, server side)
-# --------------------------------------------------------------------------
+
 class WeaponDetectionProcessor(VideoProcessorBase):
     def __init__(self):
         self.detection_queue = None
 
     def recv(self, frame):
         img = frame.to_ndarray(format="bgr24")
-        img = cv2.flip(img, 1)  # un-mirror the webcam feed (natural, non-selfie view)
+        img = cv2.flip(img, 1)  
 
         results = model.predict(img, conf=CONFIDENCE_THRESHOLD, verbose=False)
         r = results[0]
@@ -138,15 +111,11 @@ class WeaponDetectionProcessor(VideoProcessorBase):
         return av.VideoFrame.from_ndarray(annotated, format="bgr24")
 
 
-# --------------------------------------------------------------------------
-# MAIN LAYOUT
-# --------------------------------------------------------------------------
 st.title("🔫 Live Weapon Detection System")
 st.caption("Real-time knife & handgun detection powered by YOLOv8")
 
 tab_live, tab_image, tab_video = st.tabs(["📷 Live Webcam", "🖼️ Upload Image", "🎞️ Upload Video"])
 
-# ---- TAB 1: Live webcam ----------------------------------------------------
 with tab_live:
     col_video, col_log = st.columns([2, 1])
 
@@ -174,7 +143,7 @@ with tab_live:
         st.subheader("Alert Log")
         log_placeholder = st.empty()
 
-        # drain any new detections from the queue into session state
+
         while not st.session_state.detection_queue.empty():
             try:
                 st.session_state.alert_log.insert(0, st.session_state.detection_queue.get_nowait())
@@ -190,7 +159,7 @@ with tab_live:
         else:
             log_placeholder.info("No detections yet.")
 
-# ---- TAB 2: Upload a single image -----------------------------------------
+
 with tab_image:
     st.subheader("Detect weapons in an image")
 
@@ -254,9 +223,7 @@ with tab_video:
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
         out_path = in_tmp.name + "_annotated.mp4"
-        # Use imageio's bundled FFmpeg with H.264 so the output plays directly
-        # in-browser. cv2.VideoWriter's mp4v codec often produces files that
-        # Chrome/Firefox/Edge refuse to play ("No video with supported format").
+
         writer = imageio.get_writer(out_path, fps=fps, codec="libx264", quality=8)
 
         progress_bar = st.progress(0, text="Processing video...")
@@ -275,7 +242,7 @@ with tab_video:
                     log_detection(detections)
                 writer.append_data(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB))
             else:
-                writer.append_data(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))  # skipped frame, write as-is to keep video length/timing
+                writer.append_data(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)) 
 
             frame_idx += 1
             if total_frames > 0:
